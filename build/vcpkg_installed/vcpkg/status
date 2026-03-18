@@ -1,0 +1,23 @@
+Package: vcpkg-cmake-config
+Version: 2024-05-23
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 4503b50b0159a39f43d600a2b5c405814fc9db15e3b80688dc08efde70a9e247
+Status: install ok installed
+
+Package: vcpkg-cmake
+Version: 2024-04-23
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 2720451f7b0b6be7553f9d0c8bb1a9b99670cae34ab2ac070ffd4780c746ff76
+Status: install ok installed
+
+Package: zlib-ng
+Version: 2.3.3
+Depends: vcpkg-cmake, vcpkg-cmake-config
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 1f07df21ea69dd1a8552161958c20ed5b335c3f4ae95eb03974e6d325f1cc086
+Description: zlib replacement with optimizations for 'next generation' systems
+Status: install ok installed
+

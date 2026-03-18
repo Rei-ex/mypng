@@ -1,0 +1,1 @@
+clang++ -Wl,--dependency-file=CMakeFiles/test.dir/link.d CMakeFiles/test.dir/src/test.cpp.o -o test

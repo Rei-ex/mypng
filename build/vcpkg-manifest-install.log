@@ -1,0 +1,18 @@
+Detecting compiler hash for triplet x64-linux...
+Compiler found: /usr/sbin/c++
+The following packages are already installed:
+  * vcpkg-cmake:x64-linux@2024-04-23
+  * vcpkg-cmake-config:x64-linux@2024-05-23
+    zlib-ng:x64-linux@2.3.3
+zlib-ng provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(zlib-ng CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE zlib-ng::zlib)
+
+zlib-ng provides pkg-config modules:
+
+  # zlib-ng compression library
+  zlib-ng
+
+All requested installations completed successfully in: 47.2 us

@@ -1,0 +1,3 @@
+/home/rei/projects/mypng/build/CMakeFiles/mypng.dir
+/home/rei/projects/mypng/build/CMakeFiles/edit_cache.dir
+/home/rei/projects/mypng/build/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/rei/projects/mypng/build",
+  "command": "clang++ -DZLIBNG_NATIVE_API -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include -g -std=gnu++20 -mavx2 -o CMakeFiles/mypng.dir/test.cpp.o -c /home/rei/projects/mypng/test.cpp",
+  "file": "/home/rei/projects/mypng/test.cpp",
+  "output": "CMakeFiles/mypng.dir/test.cpp.o"
+}
+]

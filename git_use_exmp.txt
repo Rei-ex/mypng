@@ -1,0 +1,14 @@
+
+
+#git use exmp:
+
+git remote add origin git@github.com:Rei-ex/quickCMake.git
+git branch -m main
+git push -u origin main
+
+
+git pull
+# edit code
+git add .
+git commit -m "describe change"
+git push
