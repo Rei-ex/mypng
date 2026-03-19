@@ -1,7 +1,5 @@
-#include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <emmintrin.h>
 #include <fstream>
 #include <immintrin.h>
 #include <iosfwd>
@@ -47,8 +45,6 @@ static inline bool defilter(uint8_t *buffer); // defilter engine, using scanline
 static inline void cvt8bit(Image *result) noexcept; // convert the defiltered data to 8 bit from scanline[1]
                                                     // accept all type of bit depth
 
-static inline uint64_t abs__(uint64_t x) noexcept; // branchless absolute value
-
 static inline void cvt16bit(Image *result) noexcept; // convert the defiltered data to 16 bit mod65536, from scanline[1]
                                                      // if use pls change the result buffer into uint16_t
                                                      // this function already cover the conversion from big edian to little edian
@@ -56,6 +52,10 @@ static inline void cvt16bit(Image *result) noexcept; // convert the defiltered d
 static inline void cvt8bit3(Image *result) noexcept; // cvt8bit for color type 3, but channels MUST BE 4
 
 static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t file_size, uint8_t color_type, void (*cvtbit)(Image *)) noexcept;
+// as its name
+
+static inline uint64_t abs__(uint64_t x) noexcept; // branchless absolute value
+static inline uint64_t ceil__(double x) noexcept;  // branchless ceil
 
 
 
@@ -135,10 +135,10 @@ inline Image png_imread(const std::string path) noexcept {
 
         if (color_type != 3) {
             bpp = channels * (bit_depth == 16 ? 2 : 1);
-            bpr = (uint64_t)(std::ceil(((double)width * (double)channels * (double)bit_depth) / (double)8));
+            bpr = ceil__(((double)width * (double)channels * (double)bit_depth) / (double)8);
         } else {
             bpp = 1;
-            bpr = static_cast<int64_t>(std::ceil(((double)width * (double)bit_depth) / (double)8));
+            bpr = ceil__(((double)width * (double)bit_depth) / (double)8);
         }
 
         if (color_type == 3) {
@@ -1793,4 +1793,10 @@ static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t
 static inline uint64_t abs__(uint64_t x) noexcept {
     uint64_t y = x >> 63;
     return ((x ^ -y) + y);
+}
+
+// x must >= 0
+static inline uint64_t ceil__(double x) noexcept {
+    uint64_t a = uint64_t(x);
+    return a + (x > a);
 }
