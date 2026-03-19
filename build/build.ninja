@@ -52,7 +52,7 @@ build cmake_object_order_depends_target_mypng: phony || .
 build CMakeFiles/mypng.dir/test.cpp.o: CXX_COMPILER__mypng_unscanned_Debug /home/rei/projects/mypng/test.cpp || cmake_object_order_depends_target_mypng
   DEFINES = -DZLIBNG_NATIVE_API
   DEP_FILE = CMakeFiles/mypng.dir/test.cpp.o.d
-  FLAGS = -g -std=gnu++20 -mavx2
+  FLAGS = -g -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer
   INCLUDES = -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include
   OBJECT_DIR = CMakeFiles/mypng.dir
   OBJECT_FILE_DIR = CMakeFiles/mypng.dir
@@ -68,7 +68,7 @@ build CMakeFiles/mypng.dir/test.cpp.o: CXX_COMPILER__mypng_unscanned_Debug /home
 build mypng: CXX_EXECUTABLE_LINKER__mypng_Debug CMakeFiles/mypng.dir/test.cpp.o | vcpkg_installed/x64-linux/debug/lib/libz-ng.a
   DEP_FILE = CMakeFiles/mypng.dir/link.d
   FLAGS = -g
-  LINK_FLAGS = -Xlinker --dependency-file=CMakeFiles/mypng.dir/link.d
+  LINK_FLAGS = -flto -fuse-ld=lld -Xlinker --dependency-file=CMakeFiles/mypng.dir/link.d
   LINK_LIBRARIES = vcpkg_installed/x64-linux/debug/lib/libz-ng.a
   OBJECT_DIR = CMakeFiles/mypng.dir
   POST_BUILD = :

@@ -4,6 +4,7 @@
 #include "stb_image_write.h"
 // #include <iostream>
 
+// test images name:
 // rover
 // gray16
 // grayscale_4bit
@@ -13,7 +14,7 @@
 
 
 int main(void) {
-    const char path[] = "test_images/10.4-MB.png";
+    const char path[] = "test_images/gray16.png";
     const char new_path[] = "test_images/new.png";
     Image a = png_imread(path);
     int b = stbi_write_png(new_path, a.width, a.height, a.channels, a.buffer.data(), a.width * a.channels);

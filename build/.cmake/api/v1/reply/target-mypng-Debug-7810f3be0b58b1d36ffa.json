@@ -12,6 +12,7 @@
 		[
 			"_add_executable",
 			"add_executable",
+			"target_link_options",
 			"target_link_libraries",
 			"target_compile_options"
 		],
@@ -40,13 +41,25 @@
 			{
 				"command" : 2,
 				"file" : 1,
-				"line" : 17,
+				"line" : 32,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 1,
+				"line" : 17,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 1,
 				"line" : 19,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 31,
 				"parent" : 0
 			}
 		]
@@ -60,21 +73,37 @@
 					"fragment" : "-g -std=gnu++20"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 5,
 					"fragment" : "-mavx2"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-O3"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-march=native"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-flto"
+				},
+				{
+					"backtrace" : 6,
+					"fragment" : "-fomit-frame-pointer"
 				}
 			],
 			"defines" : 
 			[
 				{
-					"backtrace" : 3,
+					"backtrace" : 4,
 					"define" : "ZLIBNG_NATIVE_API"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 3,
+					"backtrace" : 4,
 					"isSystem" : true,
 					"path" : "/home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include"
 				}
@@ -109,6 +138,16 @@
 			},
 			{
 				"backtrace" : 3,
+				"fragment" : "-flto",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-fuse-ld=lld",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 4,
 				"fragment" : "vcpkg_installed/x64-linux/debug/lib/libz-ng.a",
 				"role" : "libraries"
 			}
