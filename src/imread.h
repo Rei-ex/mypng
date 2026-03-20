@@ -134,17 +134,17 @@ inline Image png_imread(const std::string path) noexcept {
     } else {
 
         if (color_type != 3) {
+
             bpp = channels * (bit_depth == 16 ? 2 : 1);
             bpr = ceil__(((double)width * (double)channels * (double)bit_depth) / (double)8);
+
+            decodeEngine(&result, file, file_size, color_type, cvt8bit);
         } else {
+
             bpp = 1;
             bpr = ceil__(((double)width * (double)bit_depth) / (double)8);
-        }
 
-        if (color_type == 3) {
             decodeEngine(&result, file, file_size, color_type, cvt8bit3);
-        } else {
-            decodeEngine(&result, file, file_size, color_type, cvt8bit);
         }
     }
 
@@ -294,14 +294,14 @@ static inline bool defilter(uint8_t *buffer) {
             dest += bpp;
             buffer += bpp;
             uint8_t *a = dest - bpp;
-            for (uint64_t i = bpp; i < bpr; i++) { *dest++ = uint8_t(*buffer++ + *a++ / 2); }
+            for (uint64_t i = bpp; i < bpr; i++) { *dest++ = uint8_t(*buffer++ + ((*a++) >> 1)); }
         } else [[likely]] {
             uint8_t *dest = scanline[1];
             uint8_t *b = scanline[0];
             uint64_t i = 0;
-            for (; i < bpp; i++) { *dest++ = uint8_t(*buffer++ + *b++ / 2); }
+            for (; i < bpp; i++) { *dest++ = uint8_t(*buffer++ + (*b++ >> 1)); }
             uint8_t *a = dest - bpp;
-            for (; i < bpr; i++) { *dest++ = uint8_t(*buffer++ + (*a++ + *b++) / 2); }
+            for (; i < bpr; i++) { *dest++ = uint8_t(*buffer++ + ((*a++ + *b++) >> 1)); }
         }
         break;
     }
@@ -342,7 +342,7 @@ static inline bool defilter(uint8_t *buffer) {
         buffer -= bpr;
         break;
     }
-    default: return false;
+    default: [[unlikely]] return false;
     }
 
     /*
@@ -980,15 +980,15 @@ static inline void cvt8bit(Image *result) noexcept {
     case 16: {
         uint64_t i = 0;
 
-        __m128i zz = _mm_setzero_si128();
-        __m128i mask = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, 0, 2, 4, 6, 8, 10, 12, 14);
+        __m256i zz = _mm256_setzero_si256();
+        __m256i mask = _mm256_setr_epi8(0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
 
         for (; i + 16 <= bpr; i += 16) {
-            __m128i in = _mm_loadu_si128((const __m128i *)src);
+            __m256i in = _mm256_loadu_si256((const __m256i *)src);
 
-            __m128i out = _mm_shuffle_epi8(in, mask); // keep the msl
+            __m256i out = _mm256_shuffle_epi8(in, mask); // keep the msl
 
-            _mm_storel_epi64((__m128i *)dest, out);
+            _mm_storeu_si128((__m128i *)dest, _mm256_castsi256_si128(out));
 
             src += 16;
             dest += 8;
@@ -1263,59 +1263,47 @@ static inline void cvt16bit(Image *result) noexcept {
         break;
     }
     case 8: {
+
         uint64_t i = 0;
 
-        __m128i FFs = _mm_set1_epi16(257);
-        __m128i zeroes = _mm_setzero_si128();
-
         for (; i + 16 <= bpr; i += 16) {
-            __m128i in = _mm_loadu_si128((const __m128i *)src);
+            __m128 in = _mm_loadu_si128((const __m128i *)src);
 
-            // 16 bit lane
-            __m128i in_lo = _mm_unpacklo_epi8(in, zeroes);
-            __m128i in_hi = _mm_unpackhi_epi8(in, zeroes);
+            __m128i out_lo = _mm_unpacklo_epi8(in, in);
+            __m128i out_hi = _mm_unpackhi_epi8(in, in);
 
-            // 16 bit lane for each bit depth
-            in_lo = _mm_mullo_epi16(FFs, in_lo);
-            in_hi = _mm_mullo_epi16(FFs, in_hi);
-
-            _mm_storeu_si128((__m128i *)(dest + 0 * 16), in_lo);
-            _mm_storeu_si128((__m128i *)(dest + 1 * 16), in_hi);
+            _mm_storeu_si128((__m128i *)(dest + 0 * 16), out_lo);
+            _mm_storeu_si128((__m128i *)(dest + 1 * 16), out_hi);
 
             dest += 32;
             src += 16;
         }
-        uint16_t *d = reinterpret_cast<uint16_t *>(dest);
-        for (; i < bpr; i++) { *d++ = uint16_t(*src++) * uint16_t(257); }
+
+        for (; i + 2 <= bpr; i += 2) {
+            *dest++ = *src;
+            *dest++ = *src++;
+        }
         break;
     }
     case 16: {
 
         uint64_t i = 0;
-        __m128i zeroes = _mm_setzero_si128();
+        __m256i zeroes = _mm256_setzero_si256();
 
-        for (; i + 16 <= bpr; i += 16) {
-            __m128i in = _mm_loadu_si128((const __m128i *)src);
+        for (; i + 32 <= bpr; i += 32) {
+            __m256i in = _mm256_loadu_si256((const __m256i *)src);
+            __m256i out = _mm256_or_si256(_mm256_slli_epi16(in, 8), _mm256_srli_epi16(in, 8));
 
-            __m128i msb = _mm_unpacklo_epi8(in, zeroes);
-            __m128i lsb = _mm_unpackhi_epi8(in, zeroes);
+            _mm256_storeu_si256((__m256i *)dest, out);
 
-            msb = _mm_packus_epi16(msb, zeroes);
-            lsb = _mm_packus_epi16(lsb, zeroes);
-
-            __m128i out = _mm_unpacklo_epi8(lsb, msb);
-
-            _mm_storeu_si128((__m128i *)dest, out);
-
-            dest += 16;
-            src += 16;
+            dest += 32;
+            src += 32;
         }
 
         for (; i < bpr; i++) {
-            uint16_t msb = *src++;
-            uint16_t lsb = *src++;
-            *dest++ = lsb;
-            *dest++ = msb;
+            *dest++ = *(src + 1);
+            *dest++ = *(src);
+            src += 2;
         }
         break;
     }
@@ -1342,7 +1330,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
         // isIDAT
         if (memcmp(worker.data() + 4, IDATsig, 4) == 0) {
             idat_check++;
-            if (idat_check > 1) {
+            if (idat_check > 1) [[unlikely]] {
                 result->state = 2;
                 return;
             }
@@ -1353,7 +1341,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
             strm.avail_in = 0;
             strm.next_in = Z_NULL;
             int ret = zng_inflateInit(&strm);
-            if (ret != Z_OK) {
+            if (ret != Z_OK) [[unlikely]] {
                 result->state = 3;
                 return;
             }
@@ -1379,7 +1367,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
             // data_len, ++12, data_len,...
             do {
                 data_len = readuint32BigEdian(worker.data());
-                if (file_size <= data_len) {
+                if (file_size <= data_len) [[unlikely]] {
                     result->state = 1;
                     return;
                 }
@@ -1413,7 +1401,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
                             for (uint64_t i = 0; i < row_produced; i++) {
 
                                 // defilter to scanline[1] from buffer and scanline[0]
-                                if (!defilter(out.data() + i * (bpr + 1))) {
+                                if (!defilter(out.data() + i * (bpr + 1))) [[unlikely]] {
                                     result->state = 2;
                                     return;
                                 }
@@ -1481,7 +1469,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
                 for (uint64_t i = 0; i < row_produced; i++) {
 
                     // defilter to scanline[1] from buffer and scanline[0]
-                    if (!defilter(out.data() + i * (bpr + 1))) {
+                    if (!defilter(out.data() + i * (bpr + 1))) [[unlikely]] {
                         result->state = 2;
                         return;
                     }
@@ -1689,7 +1677,7 @@ static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t
                                 scanline[1] = result->buffer.data() + imtrker * bpr;
 
                                 // defilter to scanline[1] from buffer and scanline[0]
-                                if (!defilter(out.data() + i * (bpr + 1))) {
+                                if (!defilter(out.data() + i * (bpr + 1))) [[unlikely]] {
                                     result->state = 2;
                                     return;
                                 }
@@ -1752,7 +1740,7 @@ static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t
                     scanline[1] = result->buffer.data() + imtrker * bpr;
 
                     // defilter to scanline[1] from buffer and scanline[0]
-                    if (!defilter(out.data() + i * (bpr + 1))) {
+                    if (!defilter(out.data() + i * (bpr + 1))) [[unlikely]] {
                         result->state = 2;
                         return;
                     }
