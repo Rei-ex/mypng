@@ -12,7 +12,7 @@
 
 # =============================================================================
 # Project: mypng
-# Configurations: Debug
+# Configurations: Release
 # =============================================================================
 
 #############################################
@@ -24,7 +24,7 @@ ninja_required_version = 1.5
 #############################################
 # Set configuration variable for custom commands.
 
-CONFIGURATION = Debug
+CONFIGURATION = Release
 # =============================================================================
 # Include auxiliary files.
 
@@ -49,26 +49,26 @@ cmake_ninja_workdir = /home/rei/projects/mypng/build/
 
 build cmake_object_order_depends_target_mypng: phony || .
 
-build CMakeFiles/mypng.dir/src/imread.cpp.o: CXX_COMPILER__mypng_unscanned_Debug /home/rei/projects/mypng/src/imread.cpp || cmake_object_order_depends_target_mypng
+build CMakeFiles/mypng.dir/src/imread.cpp.o: CXX_COMPILER__mypng_unscanned_Release /home/rei/projects/mypng/src/imread.cpp || cmake_object_order_depends_target_mypng
   DEFINES = -DZLIBNG_NATIVE_API
   DEP_FILE = CMakeFiles/mypng.dir/src/imread.cpp.o.d
-  FLAGS = -g -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer
+  FLAGS = -O3 -DNDEBUG -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer
   INCLUDES = -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include
   OBJECT_DIR = CMakeFiles/mypng.dir
   OBJECT_FILE_DIR = CMakeFiles/mypng.dir/src
 
-build CMakeFiles/mypng.dir/src/imsave.cpp.o: CXX_COMPILER__mypng_unscanned_Debug /home/rei/projects/mypng/src/imsave.cpp || cmake_object_order_depends_target_mypng
+build CMakeFiles/mypng.dir/src/imsave.cpp.o: CXX_COMPILER__mypng_unscanned_Release /home/rei/projects/mypng/src/imsave.cpp || cmake_object_order_depends_target_mypng
   DEFINES = -DZLIBNG_NATIVE_API
   DEP_FILE = CMakeFiles/mypng.dir/src/imsave.cpp.o.d
-  FLAGS = -g -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer
+  FLAGS = -O3 -DNDEBUG -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer
   INCLUDES = -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include
   OBJECT_DIR = CMakeFiles/mypng.dir
   OBJECT_FILE_DIR = CMakeFiles/mypng.dir/src
 
-build CMakeFiles/mypng.dir/test.cpp.o: CXX_COMPILER__mypng_unscanned_Debug /home/rei/projects/mypng/test.cpp || cmake_object_order_depends_target_mypng
+build CMakeFiles/mypng.dir/test.cpp.o: CXX_COMPILER__mypng_unscanned_Release /home/rei/projects/mypng/test.cpp || cmake_object_order_depends_target_mypng
   DEFINES = -DZLIBNG_NATIVE_API
   DEP_FILE = CMakeFiles/mypng.dir/test.cpp.o.d
-  FLAGS = -g -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer
+  FLAGS = -O3 -DNDEBUG -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer
   INCLUDES = -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include
   OBJECT_DIR = CMakeFiles/mypng.dir
   OBJECT_FILE_DIR = CMakeFiles/mypng.dir
@@ -81,11 +81,11 @@ build CMakeFiles/mypng.dir/test.cpp.o: CXX_COMPILER__mypng_unscanned_Debug /home
 #############################################
 # Link the executable mypng
 
-build mypng: CXX_EXECUTABLE_LINKER__mypng_Debug CMakeFiles/mypng.dir/src/imread.cpp.o CMakeFiles/mypng.dir/src/imsave.cpp.o CMakeFiles/mypng.dir/test.cpp.o | vcpkg_installed/x64-linux/debug/lib/libz-ng.a
+build mypng: CXX_EXECUTABLE_LINKER__mypng_Release CMakeFiles/mypng.dir/src/imread.cpp.o CMakeFiles/mypng.dir/src/imsave.cpp.o CMakeFiles/mypng.dir/test.cpp.o | vcpkg_installed/x64-linux/lib/libz-ng.a
   DEP_FILE = CMakeFiles/mypng.dir/link.d
-  FLAGS = -g
+  FLAGS = -O3 -DNDEBUG
   LINK_FLAGS = -flto -fuse-ld=lld -Xlinker --dependency-file=CMakeFiles/mypng.dir/link.d
-  LINK_LIBRARIES = vcpkg_installed/x64-linux/debug/lib/libz-ng.a
+  LINK_LIBRARIES = vcpkg_installed/x64-linux/lib/libz-ng.a
   OBJECT_DIR = CMakeFiles/mypng.dir
   POST_BUILD = :
   PRE_LINK = :

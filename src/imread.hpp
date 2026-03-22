@@ -19,4 +19,4 @@ struct Image {
 
 
 
-Image png_imread(const std::string path, const int cvtbitdepth = 8) noexcept;
+Image png_imread(const std::string path) noexcept;

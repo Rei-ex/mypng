@@ -1,6 +1,5 @@
 #include "src/imread.hpp"
 #include "src/imsave.hpp"
-#include <cstdio>
 
 // test images name:
 // rover
@@ -12,13 +11,9 @@
 
 
 int main(void) {
-    const char path[] = "test_images/rover.png";
+    const char path[] = "test_images/10.4-MB.png";
     const char new_path[] = "test_images/new.png";
-    Image a = png_imread(path, 16);
-    printf("%d\t%d\t%d\t%d\n", a.width, a.height, a.channels, a.bit_depth);
-    int b = png_imsave(new_path, a.buffer.data(), a.width, a.height, a.channels, a.bit_depth);
-    printf("%d\n", b);
-    Image c = png_imread(new_path);
-    printf("%d\n", c.state);
+    Image a = png_imread(path);
+    png_imsave(new_path, a.buffer.data(), a.width, a.height, a.channels, a.bit_depth);
     return 0;
 }

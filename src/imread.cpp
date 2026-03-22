@@ -1,6 +1,7 @@
 #include "imread.hpp"
 #include <cstdint>
 #include <cstring>
+#include <emmintrin.h>
 #include <fstream>
 #include <immintrin.h>
 #include <string>
@@ -45,12 +46,12 @@ static inline uint64_t ceil__(double x) noexcept;  // branchless ceil
 
 // static
 // constants
-static const unsigned char pngsig[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
-static const unsigned char ihdrsig[4] = {'I', 'H', 'D', 'R'};
-static const unsigned char IDATsig[4] = {'I', 'D', 'A', 'T'};
-static const unsigned char IENDsig[4] = {'I', 'E', 'N', 'D'};
-static const unsigned char PLTEsig[4] = {'P', 'L', 'T', 'E'};
-static const unsigned char tRNSsig[4] = {'t', 'R', 'N', 'S'};
+static constexpr unsigned char pngsig[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+static constexpr unsigned char ihdrsig[4] = {'I', 'H', 'D', 'R'};
+static constexpr unsigned char IDATsig[4] = {'I', 'D', 'A', 'T'};
+static constexpr unsigned char IENDsig[4] = {'I', 'E', 'N', 'D'};
+static constexpr unsigned char PLTEsig[4] = {'P', 'L', 'T', 'E'};
+static constexpr unsigned char tRNSsig[4] = {'t', 'R', 'N', 'S'};
 
 
 
@@ -75,15 +76,23 @@ static uint8_t *scanline[2]; // defilter use scanline[0] as the "up scanline"
 
 
 
-// cvtbitdepth means the target result bit depth, you have 3 options,
-// 8/16/else
-// 8 means it'll force convert all to 8 bit,
-// 16 means it'll force convert all to 16 bit,
-// else means it'll only expands the bit depth to 8 bit for you to read - so no mod256 or mod65536 conversion
-Image png_imread(const std::string path, const int cvtbitdepth) noexcept {
-    cvt8bitflag = false;
-    if (cvtbitdepth != 8) { cvt8bitflag = true; }
+/*
+flag = 0, will convert data into 8 bit + upscale ( or downscale for 16bit data )
 
+flag = 1, will convert data into 16 bit + upscale ( does not support color type 3 and will return 8 bit data only )
+
+flag = else, for bit depth 1/2/4 it will convert to 8 bit for data-readability and no conversion for bit depth 8/16
+
+the conversion happens because there's no uint4_t or uint1_t for you to read 4 bit or 1 bit data
+
+NOTICE: if bit depth == 16, reinterpret_cast<uint16_t> the buffer
+*/
+
+
+
+// imread
+Image png_imread(const std::string path) noexcept {
+    const int flag = -1;
     Image result;
     memset(reinterpret_cast<void *>(&result), 0, sizeof(result));
     imtrker = 0;
@@ -103,45 +112,68 @@ Image png_imread(const std::string path, const int cvtbitdepth) noexcept {
     const int interlace_method = worker[28];
 
     if ((compression_method | filter_method | interlace_method) != 0 | channels == 0) {
-        result.state = 10;
+        result.state = 2;
         return result;
     }
 
-    result.buffer.resize(height * width * channels * ((cvtbitdepth == 16) ? 2 : 1));
 
-    if (bit_depth == 8 && color_type != 3 && cvtbitdepth == 8) {
-        bpp = channels;
-        bpr = (uint64_t)(width)*bpp;
+    if (color_type == 3) {
+        bpp = 1;
+        bpr = ceil__(((double)width * (double)bit_depth) / (double)8);
 
-        nonct3bd8decoder(&result, file, file_size);
+        result.buffer.resize(height * width * channels);
 
-    } else {
-
-        if (color_type != 3) {
-
-            bpp = channels * (bit_depth == 16 ? 2 : 1);
-            bpr = ceil__(((double)width * (double)channels * (double)bit_depth) / (double)8);
-
-            if (cvtbitdepth == 16) {
-                decodeEngine(&result, file, file_size, color_type, cvt16bit);
-                result.bit_depth = 16;
-            } else {
-                decodeEngine(&result, file, file_size, color_type, cvt8bit);
-                result.bit_depth = 8;
-            }
-
-
-        } else {
-
-            bpp = 1;
-            bpr = ceil__(((double)width * (double)bit_depth) / (double)8);
-
-            decodeEngine(&result, file, file_size, color_type, cvt8bit3);
-            result.bit_depth = 8;
-        }
+        decodeEngine(&result, file, file_size, color_type, cvt8bit3);
+        result.bit_depth = 8;
+        return result;
     }
 
-    return result;
+    bpp = channels * (bit_depth == 16 ? 2 : 1);
+    bpr = ceil__(((double)width * (double)channels * (double)bit_depth) / (double)8);
+
+    switch (flag) {
+    case 0: {
+        result.buffer.resize(height * width * channels);
+        switch (bit_depth) {
+        case 8: {
+            nonct3bd8decoder(&result, file, file_size);
+            return result;
+        }
+        default: {
+            cvt8bitflag = true;
+            decodeEngine(&result, file, file_size, color_type, cvt8bit);
+            result.bit_depth = 8;
+            return result;
+        }
+        }
+    }
+    case 1: {
+        result.buffer.resize(height * width * channels * 2);
+        decodeEngine(&result, file, file_size, color_type, cvt16bit);
+        result.bit_depth = 16;
+        return result;
+    }
+    default: {
+        switch (bit_depth) {
+        case 8: {
+            result.buffer.resize(height * width * channels);
+            nonct3bd8decoder(&result, file, file_size);
+            return result;
+        }
+        case 16: {
+            result.buffer.resize(height * width * channels * 2);
+            decodeEngine(&result, file, file_size, color_type, cvt16bit);
+            return result;
+        }
+        default: {
+            result.buffer.resize(height * width * channels);
+            cvt8bitflag = false;
+            decodeEngine(&result, file, file_size, color_type, cvt8bit);
+            return result;
+        }
+        }
+    }
+    }
 }
 
 
@@ -681,22 +713,15 @@ static inline void cvt8bit3(Image *result) noexcept {
     }
     case 4: {
         uint64_t i = 0;
-        __m128i ones = _mm_set1_epi16(0b1111);
+        __m128i m0 = _mm_set1_epi8(0b11110000);
+        __m128i m1 = _mm_set1_epi8(0b00001111);
         __m128i zeroes = _mm_setzero_si128();
 
         for (; i + 16 <= bpr; i += 16) {
             __m128i in = _mm_loadu_si128((const __m128i *)src);
 
-            __m128i in_lo = _mm_unpacklo_epi8(in, zeroes);
-            __m128i in_hi = _mm_unpackhi_epi8(in, zeroes);
-
-            __m128i in0_lo = _mm_and_si128(_mm_srli_epi16(in_lo, 0), ones);
-            __m128i in0_hi = _mm_and_si128(_mm_srli_epi16(in_hi, 0), ones);
-            __m128i in1_lo = _mm_and_si128(_mm_srli_epi16(in_lo, 4), ones);
-            __m128i in1_hi = _mm_and_si128(_mm_srli_epi16(in_hi, 4), ones);
-
-            __m128i in0 = _mm_packus_epi16(in0_lo, in0_hi);
-            __m128i in1 = _mm_packus_epi16(in1_lo, in1_hi);
+            __m128i in0 = _mm_srli_epi64(_mm_and_si128(in, m0), 4);
+            __m128i in1 = _mm_and_si128(in, m1);
 
             __m128i a0 = _mm_unpacklo_epi8(in0, in1); // 0 x 1 lo
             __m128i a1 = _mm_unpackhi_epi8(in0, in1); // 0 x 1 hi
@@ -1552,7 +1577,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
 
         // isIEND
         else if (memcmp(worker + 4, IENDsig, 4) == 0) {
-            if (idat_check == 0) {
+            if (idat_check == 0) [[unlikely]] {
                 result->state = 2;
                 return;
             }

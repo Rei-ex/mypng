@@ -46,11 +46,11 @@ static inline void bdcvt(void *Dest, void *Source) noexcept; // convert the data
 
 
 // static constants
-static const unsigned char pngsig[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
-static const unsigned char ihdrsig[4] = {'I', 'H', 'D', 'R'};
-static const unsigned char IDATsig[4] = {'I', 'D', 'A', 'T'};
-static const unsigned char IENDsig[12] = {'0', '0', '0', '0', 'I', 'E', 'N', 'D', 0xAE, 0x42, 0x60, 0x82};
-const int level = 3;
+static constexpr unsigned char pngsig[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+static constexpr unsigned char ihdrsig[4] = {'I', 'H', 'D', 'R'};
+static constexpr unsigned char IDATsig[4] = {'I', 'D', 'A', 'T'};
+static constexpr unsigned char IENDsig[12] = {0, 0, 0, 0, 'I', 'E', 'N', 'D', 0xAE, 0x42, 0x60, 0x82};
+const int level = 4;
 const int CHUNK = uint16_t(-1); // 65536
 
 
@@ -422,6 +422,7 @@ static inline int encodeEngine(void *data, std::ofstream &file) noexcept {
 
 
             for (; j + 32 <= bpr; j += 32) {
+
                 __m256i r = _mm256_loadu_si256((const __m256i *)(raw));
                 __m256i va = _mm256_loadu_si256((const __m256i *)(a));
                 __m256i vb = _mm256_loadu_si256((const __m256i *)(b));
