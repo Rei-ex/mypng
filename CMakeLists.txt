@@ -8,8 +8,11 @@ set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(mypng 
-    src/imread.h
+add_executable(mypng
+    src/imread.cpp
+    src/imread.hpp
+    src/imsave.cpp
+    src/imsave.hpp
     test.cpp
 )
 

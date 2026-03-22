@@ -1,30 +1,10 @@
+#include "imread.hpp"
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <immintrin.h>
-#include <iosfwd>
 #include <string>
-#include <vector>
 #include <zlib-ng.h>
-
-// the Image
-// remember to check the Image state if imread have success or not
-struct Image {
-    std::vector<uint8_t> buffer; // data of the image
-    uint32_t height;
-    uint32_t width;
-    uint32_t channels;
-    uint8_t bit_depth;
-    unsigned long long state; // 0 = success
-                              // 1 = ifstream failure ( file is not open, false file size )
-                              // 2 = invalid file format ( file does not follow the PNG specification or Interlaced 1)
-                              // 3 = inflate failure ( zlib-ng inflate failure )
-}; // buffer is an object declare from the sruct so it BELONGS to the STRUCT <=> clear ownership
-
-
-
-
-
 
 
 
@@ -35,24 +15,25 @@ static inline uint32_t readuint32BigEdian(void *data) noexcept; // read the firs
 static inline int get_channels(int color_type, int bit_depth) noexcept; // a switch to pick the image channels from color type and bit depth
                                                                         // provides full check and return 0 if something is invalid
 
-static inline std::ifstream fileInit2(const std::string path, uint64_t *file_size, std::vector<uint8_t> *worker, Image *result) noexcept; // tuned, initialize by open the file, reading the IHDR, etc
+static inline std::ifstream fileInit2(const std::string path, uint64_t *file_size, uint8_t worker[33], Image *result) noexcept; // tuned, initialize by open the file, reading the IHDR, etc
 
 static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t file_size) noexcept; // a decoder specified for bit depth 8
-                                                                                                      // (optional but a little bit better performance)
+                                                                                                      // (optional but a little better performance)
 
 static inline bool defilter(uint8_t *buffer); // defilter engine, using scanline[0] as the up scanline and scanline[1] as the result scanline each time
 
 static inline void cvt8bit(Image *result) noexcept; // convert the defiltered data to 8 bit from scanline[1]
                                                     // accept all type of bit depth
+                                                    // have a hidden argument cvt3flag
 
 static inline void cvt16bit(Image *result) noexcept; // convert the defiltered data to 16 bit mod65536, from scanline[1]
                                                      // if use pls change the result buffer into uint16_t
                                                      // this function already cover the conversion from big edian to little edian
+                                                     // if use for color type 3, require a different way to handle its result
 
-static inline void cvt8bit3(Image *result) noexcept; // cvt8bit for color type 3, but channels MUST BE 4
+static inline void cvt8bit3(Image *result) noexcept; // cvt8bit for color type 3, assume channels MUST BE 4 by design
 
-static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t file_size, uint8_t color_type, void (*cvtbit)(Image *)) noexcept;
-// as its name
+static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t file_size, uint8_t color_type, void (*cvtbit)(Image *)) noexcept; // as its name
 
 static inline uint64_t abs__(uint64_t x) noexcept; // branchless absolute value
 static inline uint64_t ceil__(double x) noexcept;  // branchless ceil
@@ -78,6 +59,7 @@ static const unsigned char tRNSsig[4] = {'t', 'R', 'N', 'S'};
 
 // static
 // variables
+static bool cvt8bitflag;
 static uint64_t bpp;
 static uint64_t bpr;
 static uint64_t imtrker;
@@ -93,23 +75,26 @@ static uint8_t *scanline[2]; // defilter use scanline[0] as the "up scanline"
 
 
 
-
-// imread function
-Image png_imread(const std::string path) noexcept;
-
-inline Image png_imread(const std::string path) noexcept {
+// cvtbitdepth means the target result bit depth, you have 3 options,
+// 8/16/else
+// 8 means it'll force convert all to 8 bit,
+// 16 means it'll force convert all to 16 bit,
+// else means it'll only expands the bit depth to 8 bit for you to read - so no mod256 or mod65536 conversion
+Image png_imread(const std::string path, const int cvtbitdepth) noexcept {
+    cvt8bitflag = false;
+    if (cvtbitdepth != 8) { cvt8bitflag = true; }
 
     Image result;
     memset(reinterpret_cast<void *>(&result), 0, sizeof(result));
     imtrker = 0;
-    std::vector<uint8_t> worker(33);
+    uint8_t worker[33];
     uint64_t file_size = 0;
 
-    std::ifstream file = fileInit2(path, &file_size, &worker, &result);
+    std::ifstream file = fileInit2(path, &file_size, worker, &result);
     if (result.state != 0) { return result; }
 
-    const uint32_t width = result.width = readuint32BigEdian(worker.data() + 16);
-    const uint32_t height = result.height = readuint32BigEdian(worker.data() + 20);
+    const uint32_t width = result.width = readuint32BigEdian(worker + 16);
+    const uint32_t height = result.height = readuint32BigEdian(worker + 20);
     const int bit_depth = result.bit_depth = static_cast<int>(worker[24]);
     const int color_type = static_cast<int>(worker[25]);
     const int channels = result.channels = get_channels(color_type, bit_depth);
@@ -118,14 +103,13 @@ inline Image png_imread(const std::string path) noexcept {
     const int interlace_method = worker[28];
 
     if ((compression_method | filter_method | interlace_method) != 0 | channels == 0) {
-        result.state = 2;
+        result.state = 10;
         return result;
     }
 
-    worker.clear();
-    result.buffer.resize(height * width * channels);
+    result.buffer.resize(height * width * channels * ((cvtbitdepth == 16) ? 2 : 1));
 
-    if (bit_depth == 8 && color_type != 3) {
+    if (bit_depth == 8 && color_type != 3 && cvtbitdepth == 8) {
         bpp = channels;
         bpr = (uint64_t)(width)*bpp;
 
@@ -138,17 +122,24 @@ inline Image png_imread(const std::string path) noexcept {
             bpp = channels * (bit_depth == 16 ? 2 : 1);
             bpr = ceil__(((double)width * (double)channels * (double)bit_depth) / (double)8);
 
-            decodeEngine(&result, file, file_size, color_type, cvt8bit);
+            if (cvtbitdepth == 16) {
+                decodeEngine(&result, file, file_size, color_type, cvt16bit);
+                result.bit_depth = 16;
+            } else {
+                decodeEngine(&result, file, file_size, color_type, cvt8bit);
+                result.bit_depth = 8;
+            }
+
+
         } else {
 
             bpp = 1;
             bpr = ceil__(((double)width * (double)bit_depth) / (double)8);
 
             decodeEngine(&result, file, file_size, color_type, cvt8bit3);
+            result.bit_depth = 8;
         }
     }
-
-    result.bit_depth = 8;
 
     return result;
 }
@@ -227,8 +218,7 @@ static inline int get_channels(int color_type, int bit_depth) noexcept {
     return channels;
 }
 
-static inline std::ifstream fileInit2(const std::string path, uint64_t *file_size, std::vector<uint8_t> *worker, Image *result) noexcept {
-    uint8_t *w = (*worker).data();
+static inline std::ifstream fileInit2(const std::string path, uint64_t *file_size, uint8_t worker[33], Image *result) noexcept {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         result->state = 1;
@@ -236,16 +226,16 @@ static inline std::ifstream fileInit2(const std::string path, uint64_t *file_siz
     }
     *file_size = file.tellg();
     file.seekg(0, std::ios::beg);
-    if (!file.read(reinterpret_cast<char *>(w), 33) || *file_size < 33 + 12) {
+    if (!file.read(reinterpret_cast<char *>(worker), 33) || *file_size < 33 + 12) {
         result->state = 1;
         return file;
     }
 
     uint32_t crc_ = zng_crc32(0U, Z_NULL, 0);
-    crc_ = zng_crc32(crc_, w + 12, 4);
-    crc_ = zng_crc32(crc_, w + 16, readuint32BigEdian(w + 8));
+    crc_ = zng_crc32(crc_, worker + 12, 4);
+    crc_ = zng_crc32(crc_, worker + 16, readuint32BigEdian(worker + 8));
 
-    if (memcmp(w, pngsig, 8) != 0 | memcmp(w + 12, ihdrsig, 4) != 0 | readuint32BigEdian(w + 29) != crc_) {
+    if (memcmp(worker, pngsig, 8) != 0 | memcmp(worker + 12, ihdrsig, 4) != 0 | readuint32BigEdian(worker + 29) != crc_) {
         result->state = 2;
         return file;
     }
@@ -788,7 +778,8 @@ static inline void cvt8bit3(Image *result) noexcept {
 }
 
 static inline void cvt8bit(Image *result) noexcept {
-    const bool ct3flag = false; // if true this function will not scale the data into mod256, it'll only do the bit depth conversion
+    const bool ct3flag = cvt8bitflag; // if true this function will not scale the data into mod256, it'll only do the bit depth conversion
+    // meaning the final data could be in that same bit depth mode
 
     uint8_t *src = scanline[1];
     uint8_t *dest = result->buffer.data() + imtrker * (uint64_t)(result->width) * (1 + (!ct3flag) * ((uint64_t)(result->channels) - 1));
@@ -1312,7 +1303,7 @@ static inline void cvt16bit(Image *result) noexcept {
 
 static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t file_size, uint8_t color_type, void (*cvtbit)(Image *)) noexcept {
 
-    std::vector<uint8_t> worker(12);
+    uint8_t worker[12];
 
     uint64_t data_len{};
     int plte_check{};
@@ -1324,11 +1315,11 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
 
     const uint64_t CHUNK = 65536; // 2^16
     do {
-        file.read(reinterpret_cast<char *>(worker.data()), 8);
-        data_len = readuint32BigEdian(worker.data());
+        file.read(reinterpret_cast<char *>(worker), 8);
+        data_len = readuint32BigEdian(worker);
 
         // isIDAT
-        if (memcmp(worker.data() + 4, IDATsig, 4) == 0) {
+        if (memcmp(worker + 4, IDATsig, 4) == 0) {
             idat_check++;
             if (idat_check > 1) [[unlikely]] {
                 result->state = 2;
@@ -1366,13 +1357,13 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
 
             // data_len, ++12, data_len,...
             do {
-                data_len = readuint32BigEdian(worker.data());
+                data_len = readuint32BigEdian(worker);
                 if (file_size <= data_len) [[unlikely]] {
                     result->state = 1;
                     return;
                 }
                 crc = zng_crc32(0U, Z_NULL, 0);
-                crc = zng_crc32(crc, worker.data() + 4, 4);
+                crc = zng_crc32(crc, worker + 4, 4);
                 if (data_len < ai) {
                     file.read(reinterpret_cast<char *>(in.data() + intrker), data_len);
                     ai -= data_len;
@@ -1438,21 +1429,21 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
                     } while (ftrker != 0);
                 }
 
-                if (!file.read(reinterpret_cast<char *>(worker.data() + 8), 4)) {
+                if (!file.read(reinterpret_cast<char *>(worker + 8), 4)) {
                     result->state = 1;
                     return;
                 }
 
-                if (readuint32BigEdian(worker.data() + 8) != crc) {
+                if (readuint32BigEdian(worker + 8) != crc) {
                     result->state = 2;
                     return;
                 }
 
-                if (!file.read(reinterpret_cast<char *>(worker.data()), 8)) {
+                if (!file.read(reinterpret_cast<char *>(worker), 8)) {
                     result->state = 1;
                     return;
                 }
-            } while (memcmp(worker.data() + 4, IDATsig, 4) == 0);
+            } while (memcmp(worker + 4, IDATsig, 4) == 0);
             strm.avail_in = intrker;
             strm.next_in = in.data();
             do {
@@ -1492,7 +1483,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
         }
 
         // PLTE
-        else if (memcmp(worker.data() + 4, PLTEsig, 4) == 0) {
+        else if (memcmp(worker + 4, PLTEsig, 4) == 0) {
             plte_check++;
             if (plte_check > 1) [[unlikely]] {
                 result->state = 2;
@@ -1504,12 +1495,12 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
                 file.read(reinterpret_cast<char *>(plte.data()), data_len);
 
                 uint32_t crc_ = zng_crc32(0U, Z_NULL, 0);
-                crc_ = zng_crc32(crc_, worker.data() + 4, 4);
+                crc_ = zng_crc32(crc_, worker + 4, 4);
                 crc_ = zng_crc32(crc_, plte.data(), data_len);
 
-                file.read(reinterpret_cast<char *>(worker.data() + 8), 4);
+                file.read(reinterpret_cast<char *>(worker + 8), 4);
 
-                if (plte_check > 1 || (data_len) % 3 != 0 || !(data_len / 3 >= 0 && data_len / 3 <= 256) || readuint32BigEdian(worker.data() + 8) != crc_) [[unlikely]] {
+                if (plte_check > 1 || (data_len) % 3 != 0 || !(data_len / 3 >= 0 && data_len / 3 <= 256) || readuint32BigEdian(worker + 8) != crc_) [[unlikely]] {
                     result->state = 2;
                     return;
                 }
@@ -1530,7 +1521,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
         }
 
         // tRNS
-        else if (memcmp(worker.data() + 4, tRNSsig, 4) == 0) {
+        else if (memcmp(worker + 4, tRNSsig, 4) == 0) {
             tRNS_check++;
             if (tRNS_check > 1 || plte_check == 0 || plte_check == 0 || data_len > palette.size()) [[unlikely]] {
                 result->state = 2;
@@ -1544,11 +1535,11 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
                 file.read(reinterpret_cast<char *>(trns.data()), data_len);
 
                 uint32_t crc_ = zng_crc32(0U, Z_NULL, 0);
-                crc_ = zng_crc32(crc_, worker.data() + 4, 4);
+                crc_ = zng_crc32(crc_, worker + 4, 4);
                 crc_ = zng_crc32(crc_, trns.data(), data_len);
 
-                file.read(reinterpret_cast<char *>(worker.data() + 8), 4);
-                if (readuint32BigEdian(worker.data() + 8) != crc_) {
+                file.read(reinterpret_cast<char *>(worker + 8), 4);
+                if (readuint32BigEdian(worker + 8) != crc_) {
                     result->state = 2;
                     return;
                 }
@@ -1560,7 +1551,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
         }
 
         // isIEND
-        else if (memcmp(worker.data() + 4, IENDsig, 4) == 0) {
+        else if (memcmp(worker + 4, IENDsig, 4) == 0) {
             if (idat_check == 0) {
                 result->state = 2;
                 return;
@@ -1598,7 +1589,7 @@ static inline void decodeEngine(Image *result, std::ifstream &file, uint64_t fil
 // non color type 3, bit depth 8, decoder
 static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t file_size) noexcept {
 
-    std::vector<uint8_t> worker(12);
+    uint8_t worker[12];
 
     uint64_t data_len{};
     int idat_check{};
@@ -1606,11 +1597,11 @@ static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t
 
     const uint64_t CHUNK = 65536; // 2^16
     do {
-        file.read(reinterpret_cast<char *>(worker.data()), 8);
-        data_len = readuint32BigEdian(worker.data());
+        file.read(reinterpret_cast<char *>(worker), 8);
+        data_len = readuint32BigEdian(worker);
 
         // isIDAT
-        if (memcmp(worker.data() + 4, IDATsig, 4) == 0) {
+        if (memcmp(worker + 4, IDATsig, 4) == 0) {
             idat_check++;
             if (idat_check > 1) {
                 result->state = 2;
@@ -1639,13 +1630,13 @@ static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t
 
             // data_len, ++12, data_len,...
             do {
-                data_len = readuint32BigEdian(worker.data());
+                data_len = readuint32BigEdian(worker);
                 if (file_size <= data_len) {
                     result->state = 1;
                     return;
                 }
                 crc = zng_crc32(0U, Z_NULL, 0);
-                crc = zng_crc32(crc, worker.data() + 4, 4);
+                crc = zng_crc32(crc, worker + 4, 4);
                 if (data_len < ai) {
                     file.read(reinterpret_cast<char *>(in.data() + intrker), data_len);
                     ai -= data_len;
@@ -1706,21 +1697,21 @@ static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t
                     } while (ftrker != 0);
                 }
 
-                if (!file.read(reinterpret_cast<char *>(worker.data() + 8), 4)) {
+                if (!file.read(reinterpret_cast<char *>(worker + 8), 4)) {
                     result->state = 1;
                     return;
                 }
 
-                if (readuint32BigEdian(worker.data() + 8) != crc) {
+                if (readuint32BigEdian(worker + 8) != crc) {
                     result->state = 2;
                     return;
                 }
 
-                if (!file.read(reinterpret_cast<char *>(worker.data()), 8)) {
+                if (!file.read(reinterpret_cast<char *>(worker), 8)) {
                     result->state = 1;
                     return;
                 }
-            } while (memcmp(worker.data() + 4, IDATsig, 4) == 0);
+            } while (memcmp(worker + 4, IDATsig, 4) == 0);
             strm.avail_in = intrker;
             strm.next_in = in.data();
             do {
@@ -1755,7 +1746,7 @@ static inline void nonct3bd8decoder(Image *result, std::ifstream &file, uint64_t
         }
 
         // isIEND
-        else if (memcmp(worker.data() + 4, IENDsig, 4) == 0) {
+        else if (memcmp(worker + 4, IENDsig, 4) == 0) {
             if (idat_check == 0) {
                 result->state = 2;
                 return;
