@@ -11,7 +11,7 @@
 
 
 int main(void) {
-    const char path[] = "test_images/10.4-MB.png";
+    const char path[] = "test_images/rover.png";
     const char new_path[] = "test_images/new.png";
     Image a = png_imread(path);
     png_imsave(new_path, a.buffer.data(), a.width, a.height, a.channels, a.bit_depth);

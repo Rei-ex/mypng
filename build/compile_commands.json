@@ -1,19 +1,19 @@
 [
 {
   "directory": "/home/rei/projects/mypng/build",
-  "command": "clang++ -DZLIBNG_NATIVE_API -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include -O3 -DNDEBUG -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer -o CMakeFiles/mypng.dir/src/imread.cpp.o -c /home/rei/projects/mypng/src/imread.cpp",
+  "command": "clang++ -DZLIBNG_NATIVE_API -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include -std=gnu++20 -mavx2 -o CMakeFiles/mypng.dir/src/imread.cpp.o -c /home/rei/projects/mypng/src/imread.cpp",
   "file": "/home/rei/projects/mypng/src/imread.cpp",
   "output": "CMakeFiles/mypng.dir/src/imread.cpp.o"
 },
 {
   "directory": "/home/rei/projects/mypng/build",
-  "command": "clang++ -DZLIBNG_NATIVE_API -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include -O3 -DNDEBUG -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer -o CMakeFiles/mypng.dir/src/imsave.cpp.o -c /home/rei/projects/mypng/src/imsave.cpp",
+  "command": "clang++ -DZLIBNG_NATIVE_API -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include -std=gnu++20 -mavx2 -o CMakeFiles/mypng.dir/src/imsave.cpp.o -c /home/rei/projects/mypng/src/imsave.cpp",
   "file": "/home/rei/projects/mypng/src/imsave.cpp",
   "output": "CMakeFiles/mypng.dir/src/imsave.cpp.o"
 },
 {
   "directory": "/home/rei/projects/mypng/build",
-  "command": "clang++ -DZLIBNG_NATIVE_API -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include -O3 -DNDEBUG -std=gnu++20 -mavx2 -O3 -march=native -flto -fomit-frame-pointer -o CMakeFiles/mypng.dir/test.cpp.o -c /home/rei/projects/mypng/test.cpp",
+  "command": "clang++ -DZLIBNG_NATIVE_API -isystem /home/rei/projects/mypng/build/vcpkg_installed/x64-linux/include -std=gnu++20 -mavx2 -o CMakeFiles/mypng.dir/test.cpp.o -c /home/rei/projects/mypng/test.cpp",
   "file": "/home/rei/projects/mypng/test.cpp",
   "output": "CMakeFiles/mypng.dir/test.cpp.o"
 }

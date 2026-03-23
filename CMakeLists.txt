@@ -24,12 +24,4 @@ target_compile_options(mypng PRIVATE
     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-mavx2>
 )
 
-set(CLANG_PERFORMANCE_FLAGS 
-    -O3 
-    -march=native 
-    -flto 
-    -fomit-frame-pointer 
-)
-
 target_compile_options(mypng PRIVATE $<$<CXX_COMPILER_ID:Clang>:${CLANG_PERFORMANCE_FLAGS}>)
-target_link_options(mypng PRIVATE $<$<CXX_COMPILER_ID:Clang>:-flto -fuse-ld=lld>)

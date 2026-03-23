@@ -1,5 +1,5 @@
-# ninja log v6
-1333	1820	1774198741987511812	mypng	fe715787a5091eb4
-3	1333	1774198740659511571	CMakeFiles/mypng.dir/src/imread.cpp.o	8b087c1c227c1cc
-4	1025	1774198740659511571	CMakeFiles/mypng.dir/src/imsave.cpp.o	278305b68f93679d
-4	359	1774198740659511571	CMakeFiles/mypng.dir/test.cpp.o	4e0b840ca5c92636
+# ninja log v7
+2	228	1774289454168829146	CMakeFiles/mypng.dir/test.cpp.o	84c5ca6ebca88ca5
+1	10	1774289454166507173	CMakeFiles/mypng.dir/src/imread.cpp.o	2e81b46b58a65b8e
+2	10	1774289454167507179	CMakeFiles/mypng.dir/src/imsave.cpp.o	7799a087c1c942da
+228	294	1774289454393686232	mypng	3827c28f2284d6a9

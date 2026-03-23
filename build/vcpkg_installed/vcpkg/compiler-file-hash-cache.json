@@ -1,14 +1,14 @@
 {
-  "/usr/sbin/c++" : 
+  "/usr/lib64/ccache/c++" : 
   {
-    "hash" : "5a5964a5841cbeea5f9045dd6244d91ee5b9699d",
-    "size" : 1337568,
-    "timestamp" : 1769126400
+    "hash" : "a9a11ee927b1a176d22c65c65c4fbb4707524da6",
+    "size" : 1331208,
+    "timestamp" : 1753228800
   },
-  "/usr/sbin/cc" : 
+  "/usr/lib64/ccache/cc" : 
   {
-    "hash" : "c503be2802bd865c8479f59430f6d1b40203716c",
-    "size" : 1333376,
-    "timestamp" : 1769126400
+    "hash" : "a9a11ee927b1a176d22c65c65c4fbb4707524da6",
+    "size" : 1331208,
+    "timestamp" : 1753228800
   }
 }

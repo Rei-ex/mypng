@@ -15,7 +15,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-addr2line"
+			"value" : "/usr/bin/llvm-addr2line"
 		},
 		{
 			"name" : "CMAKE_AR",
@@ -31,7 +31,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-ar"
+			"value" : "/usr/bin/llvm-ar"
 		},
 		{
 			"name" : "CMAKE_BUILD_TYPE",
@@ -43,7 +43,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "Release"
+			"value" : ""
 		},
 		{
 			"name" : "CMAKE_CACHEFILE_DIR",
@@ -91,7 +91,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "6"
+			"value" : "10"
 		},
 		{
 			"name" : "CMAKE_COMMAND",
@@ -139,11 +139,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "CXX compiler"
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : "clang++"
+			"type" : "FILEPATH",
+			"value" : "/usr/lib64/ccache/c++"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -155,27 +155,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "LLVM archiver"
+					"value" : "A wrapper around 'ar' adding the appropriate '--plugin' option for the GCC compiler"
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/llvm-ar-20"
-		},
-		{
-			"name" : "CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "`clang-scan-deps` dependency scanner"
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "/usr/bin/clang-scan-deps-20"
+			"value" : "/usr/bin/gcc-ar"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -187,11 +171,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "Generate index for LLVM archive"
+					"value" : "A wrapper around 'ranlib' adding the appropriate '--plugin' option for the GCC compiler"
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/llvm-ranlib-20"
+			"value" : "/usr/bin/gcc-ranlib"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -283,11 +267,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "C compiler"
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : "clang"
+			"type" : "STRING",
+			"value" : "/usr/lib64/ccache/clang"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_AR",
@@ -303,7 +287,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/llvm-ar-20"
+			"value" : "/usr/bin/llvm-ar-21"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_CLANG_SCAN_DEPS",
@@ -319,7 +303,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/clang-scan-deps-20"
+			"value" : "/usr/bin/clang-scan-deps-21"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_RANLIB",
@@ -335,7 +319,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/llvm-ranlib-20"
+			"value" : "/usr/bin/llvm-ranlib-21"
 		},
 		{
 			"name" : "CMAKE_C_FLAGS",
@@ -431,7 +415,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-dlltool"
+			"value" : "/usr/bin/llvm-dlltool"
 		},
 		{
 			"name" : "CMAKE_EDIT_COMMAND",
@@ -563,11 +547,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Enable/Disable output of compile commands during generation."
 				}
 			],
 			"type" : "BOOL",
-			"value" : "TRUE"
+			"value" : ""
 		},
 		{
 			"name" : "CMAKE_EXTRA_GENERATOR",
@@ -691,7 +675,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/ld.lld"
+			"value" : "/usr/bin/ld"
 		},
 		{
 			"name" : "CMAKE_MAKE_PROGRAM",
@@ -707,7 +691,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/ninja-build"
+			"value" : "/usr/bin/ninja-build"
 		},
 		{
 			"name" : "CMAKE_MODULE_LINKER_FLAGS",
@@ -803,7 +787,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-nm"
+			"value" : "/usr/bin/llvm-nm"
 		},
 		{
 			"name" : "CMAKE_NUMBER_OF_MAKEFILES",
@@ -831,7 +815,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-objcopy"
+			"value" : "/usr/bin/llvm-objcopy"
 		},
 		{
 			"name" : "CMAKE_OBJDUMP",
@@ -847,7 +831,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-objdump"
+			"value" : "/usr/bin/llvm-objdump"
 		},
 		{
 			"name" : "CMAKE_PLATFORM_INFO_INITIALIZED",
@@ -911,7 +895,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-ranlib"
+			"value" : "/usr/bin/llvm-ranlib"
 		},
 		{
 			"name" : "CMAKE_READELF",
@@ -927,7 +911,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-readelf"
+			"value" : "/usr/bin/llvm-readelf"
 		},
 		{
 			"name" : "CMAKE_ROOT",
@@ -1147,7 +1131,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/sbin/llvm-strip"
+			"value" : "/usr/bin/llvm-strip"
 		},
 		{
 			"name" : "CMAKE_TAPI",
@@ -1191,7 +1175,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/sbin/uname"
+			"value" : "/usr/bin/uname"
 		},
 		{
 			"name" : "CMAKE_VERBOSE_MAKEFILE",
@@ -1440,42 +1424,6 @@
 			],
 			"type" : "INTERNAL",
 			"value" : "/home/rei/vcpkg"
-		},
-		{
-			"name" : "_CMAKE_CXX_LINKER_PUSHPOP_STATE_SUPPORTED",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "linker supports push/pop state"
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "TRUE"
-		},
-		{
-			"name" : "_CMAKE_C_LINKER_PUSHPOP_STATE_SUPPORTED",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "linker supports push/pop state"
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "TRUE"
-		},
-		{
-			"name" : "_CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "linker supports push/pop state"
-				}
-			],
-			"type" : "INTERNAL",
-			"value" : "TRUE"
 		},
 		{
 			"name" : "_VCPKG_INSTALLED_DIR",
